@@ -1,0 +1,25 @@
+{
+  "name": "engineering",
+  "version": "0.1.0",
+  "description": "Engineer lightweight finite state machines",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alfyboza/engineering.js.git"
+  },
+  "keywords": [
+    "engineer",
+    "engineering",
+    "fsm",
+    "statemachine"
+  ],
+  "author": "Alfonso Boza <alfonso@al.fon.so>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alfyboza/engineering.js/issues"
+  },
+  "homepage": "https://github.com/alfyboza/engineering.js"
+}
