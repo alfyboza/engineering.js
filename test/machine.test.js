@@ -55,7 +55,41 @@ describe('engineer(options)', function () {
     }).to.throw(/^Unknown state transition:/);
   });
 
+  it('provides a getter to query states', function () {
+    expect(this.gate.states).to.include.members(['open', 'closed']);
+  });
+
   it('honors default state', function () {
     expect(this.gate.is('closed')).to.be.true;
+  });
+
+  describe('#is(states[, fn[, context]])', function () {
+    it('returns `false` if not at state');
+
+    it('invokes callback if at state');
+
+    it('returns `true` if at state');
+
+    it('accepts a single state or an array of states');
+  });
+
+  describe('#on(state, fn[, context])', function () {
+    it('determines whether to invoke callback immediately');
+
+    it('enqueues callback, invoking when transitioned to state');
+  });
+
+  describe('#once(state, fn[, context])', function () {
+    it('determines whether to invoke callback immediately');
+
+    it('enqueues callback if not invoked, doing so just once when transitioned to state');
+  });
+
+  describe('#to(state[, ...args])', function () {
+    it('transitions to given state, invoking callbacks');
+
+    it('does not allow transitioning to invalid state');
+
+    it('invokes callbacks with passed arguments');
   });
 });
