@@ -118,7 +118,7 @@ describe('engineer(options)', function () {
   describe('#once(state, fn[, context])', function () {
     it('determines whether to invoke callback immediately', function () {
       var is = this.sinon.spy(this.gate, 'is');
-      this.gate.on('closed', this.sinon.spy());
+      this.gate.once('closed', this.sinon.spy());
       expect(is).to.have.been.calledWith('closed');
     });
 
