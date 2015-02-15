@@ -31,6 +31,18 @@ describe('engineer(options)', function () {
     }).to.throw('Expected default state');
   });
 
+  it('throws if default state is unknown', function () {
+    expect(function () {
+      engineer({
+        states: {
+          closed: ['open'],
+          open: ['closed']
+        },
+        default: 'half-open'
+      });
+    }).to.throw(/^Invalid default state:/);
+  });
+
   it('throws if state transitions to unknown state', function () {
     expect(function () {
       engineer({
