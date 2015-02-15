@@ -1,4 +1,4 @@
-engineering [![Build Status](https://travis-ci.org/alfyboza/engineering.js.svg?branch=master)](https://travis-ci.org/alfyboza/engineering.js)
+engineering [![Build Status][travis-img]][travis-link] [![Coverage Status][coveralls-img]][coveralls-link]
 ===========
 
 Engineer lightweight finite state machines.
@@ -108,6 +108,12 @@ Invokes *fn* with *context* just once when state machine has transitioned to *st
 Transitions state machine to *state*. Any passed *args* will be applied to any callbacks passed to `.is()`, `.on()`, and `.once()`.
 
 License
----------
+-------
 
 MIT
+
+[coveralls-img]: https://coveralls.io/repos/alfyboza/engineering.js/badge.svg?branch=master
+[coveralls-link]: https://coveralls.io/r/alfyboza/engineering.js?branch=master
+
+[travis-img]: https://travis-ci.org/alfyboza/engineering.js.svg?branch=master
+[travis-link]: https://travis-ci.org/alfyboza/engineering.js
