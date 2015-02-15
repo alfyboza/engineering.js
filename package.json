@@ -28,6 +28,8 @@
     "chai": "^2.0.0",
     "gulp": "^3.8.11",
     "gulp-jshint": "^1.9.2",
-    "gulp-mocha": "^2.0.0"
+    "gulp-mocha": "^2.0.0",
+    "sinon": "^1.12.2",
+    "sinon-chai": "^2.7.0"
   }
 }

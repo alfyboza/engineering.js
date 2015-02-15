@@ -1,9 +1,18 @@
 /*jshint mocha: true, -W030 */
 var chai = require('chai');
 var engineer = require('../lib/machine');
+var sinon = require('sinon');
+
+chai.use(require('sinon-chai'));
+
+// Reference chai's `expect()``
 var expect = chai.expect;
 
 describe('engineer(options)', function () {
+  beforeEach(function () {
+    this.sinon = sinon.sandbox.create();
+  });
+
   beforeEach(function () {
     this.gate = engineer({
       states: {
@@ -12,6 +21,10 @@ describe('engineer(options)', function () {
       },
       default: 'closed'
     });
+  });
+
+  afterEach(function () {
+    this.sinon.restore();
   });
 
   it('throws if no state transitions are specified', function () {
@@ -64,32 +77,84 @@ describe('engineer(options)', function () {
   });
 
   describe('#is(states[, fn[, context]])', function () {
-    it('returns `false` if not at state');
+    it('returns `false` if not at state', function () {
+      expect(this.gate.is('open')).to.be.false;
+    });
 
-    it('invokes callback if at state');
+    it('invokes callback if at state', function () {
+      var spy = sinon.spy();
+      this.gate.is('closed', spy);
+      expect(spy).to.have.been.called;
+    });
 
-    it('returns `true` if at state');
+    it('returns `true` if at state', function () {
+      expect(this.gate.is('closed')).to.be.true;
+    });
 
-    it('accepts a single state or an array of states');
+    it('accepts a single state or an array of states', function () {
+      expect(this.gate.is(['open', 'closed'])).to.be.true;
+    });
   });
 
   describe('#on(state, fn[, context])', function () {
-    it('determines whether to invoke callback immediately');
+    it('determines whether to invoke callback immediately', function () {
+      var is = this.sinon.spy(this.gate, 'is');
+      this.gate.on('closed', sinon.spy());
+      expect(is).to.have.been.calledWith('closed');
+    });
 
-    it('enqueues callback, invoking when transitioned to state');
+    it('enqueues callback, invoking when transitioned to state', function () {
+      var gate = this.gate;
+      var spy = sinon.spy();
+
+      gate.on('closed', spy);
+      ['open', 'closed'].forEach(function (state) {
+        gate.to(state);
+      });
+      expect(spy).to.have.been.calledTwice;
+    });
   });
 
   describe('#once(state, fn[, context])', function () {
-    it('determines whether to invoke callback immediately');
+    it('determines whether to invoke callback immediately', function () {
+      var is = this.sinon.spy(this.gate, 'is');
+      this.gate.on('closed', this.sinon.spy());
+      expect(is).to.have.been.calledWith('closed');
+    });
 
-    it('enqueues callback if not invoked, doing so just once when transitioned to state');
+    it('enqueues callback if not invoked, doing so just once when transitioned to state', function () {
+      var gate = this.gate;
+      var spy = sinon.spy();
+
+      gate.once('open', spy);
+      ['open', 'closed', 'open'].forEach(function (state) {
+        gate.to(state);
+      });
+      expect(spy).to.have.been.calledOnce;
+    });
   });
 
   describe('#to(state[, ...args])', function () {
-    it('transitions to given state, invoking callbacks');
+    it('transitions to given state, invoking callbacks', function (done) {
+      this.gate.on('open', done);
+      this.gate.to('open');
+    });
 
-    it('does not allow transitioning to invalid state');
+    it('does not allow transitioning to invalid state', function () {
+      var gate = this.gate;
 
-    it('invokes callbacks with passed arguments');
+      expect(function () {
+        gate.to('closed');
+      }).to.throw(/^Invalid transition:/);
+    });
+
+    it('invokes callbacks with passed arguments', function () {
+      var args = {my: 'arguments'};
+      var spy = sinon.spy();
+
+      this.gate.on('open', spy);
+      this.gate.to('open', args);
+      expect(spy).to.have.been.calledWithExactly(args);
+    });
   });
 });
