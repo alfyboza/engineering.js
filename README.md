@@ -91,7 +91,7 @@ The following *options* can be specified:
 * `states`  &rarr; **Object**: A map of state transitions. **Required.**
 * `default` &rarr; **String**: The default state. **Required.**
 
-### *machine*.is(*state*[, *fn*[, *context*]) &rarr; Boolean
+### *machine*.is(*state*[, *fn*[, *context*]]) &rarr; Boolean
 
 Indicates whether state machine is currently at *state*. If so, invokes *fn* with *context*.
 
