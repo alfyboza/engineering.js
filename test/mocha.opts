@@ -1,0 +1,4 @@
+--colors
+--check-leaks
+--reporter dot
+--ui bdd
