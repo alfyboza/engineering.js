@@ -1,4 +1,4 @@
-engineering
+engineering [![Build Status](https://travis-ci.org/alfyboza/engineering.js.svg?branch=master)](https://travis-ci.org/alfyboza/engineering.js)
 ===========
 
 Engineer lightweight finite state machines.
