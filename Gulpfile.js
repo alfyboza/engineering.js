@@ -33,7 +33,7 @@ gulp.task('instrument', function (done) {
 
 gulp.task('coveralls', ['instrument'], function () {
   return gulp
-    .src('coverage/**/lconv.info')
+    .src('coverage/**/lcov.info')
     .pipe(coveralls());
 });
 
