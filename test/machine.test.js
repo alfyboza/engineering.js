@@ -157,4 +157,41 @@ describe('engineer(options)', function () {
       expect(spy).to.have.been.calledWithExactly(args);
     });
   });
+
+  describe('#when(state, fn[, context])', function () {
+    it('determines whether to invoke callback immediately', function () {
+      var is = this.sinon.spy(this.gate, 'is');
+      this.gate.when('closed', this.sinon.spy());
+      expect(is).to.have.been.calledWith('closed');
+    });
+
+    it('enqueues callback if not invoked, doing so only if transitioned to next', function () {
+      var gate = this.gate;
+      var spy = sinon.spy();
+
+      gate.when('open', spy);
+      ['open', 'closed', 'open'].forEach(function (state) {
+        gate.to(state);
+      });
+      expect(spy).to.have.been.calledOnce;
+    });
+
+    it('enqueues callback if not invoked, discarding it if not next transition', function () {
+      var intensity = engineer({
+        states: {
+          high: ['medium'],
+          medium: ['high', 'low'],
+          low: ['medium']
+        },
+        default: 'medium'
+      });
+      var spy = sinon.spy();
+
+      intensity.when('high', spy);
+      ['low', 'medium', 'high'].forEach(function (state) {
+        intensity.to(state);
+      });
+      expect(spy).to.not.have.been.called;
+    });
+  });
 });

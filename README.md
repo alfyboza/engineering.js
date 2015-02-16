@@ -48,7 +48,7 @@ Client.prototype.connect = function (fn) {
   if (state.is('connected', fn)) {
     return;
   } else if (state.is('connecting')) {
-    state.once('connected', fn);
+    state.when('connected', fn);
   } else if (state.is('disconnecting')) {
     state.once('disconnected', (function () {
       this.connect(fn);
@@ -67,13 +67,11 @@ Client.prototype.connect = function (fn) {
 };
 ```
 
+And then, using `.when()`, let the state machine ensure that the message is always sent whether you're already connected or are presently connecting:
+
 ```js
 Client.prototype.send = function (data) {
-  var state = this.state;
-  var fn = state.is('connecting') ? 'once' : 'is';
-
-  // If connected, send data via WebSocket; if connecting, wait until connected
-  state[fn]('connected', function (ws) {
+  this.state.when('connected', function (ws) {
     ws.send(data);
   });
 };
@@ -97,15 +95,19 @@ Indicates whether state machine is currently at *state*. If so, invokes *fn* wit
 
 ### *machine*.on(*state*, *fn*[, *context*]) &rarr; Machine
 
-Invokes *fn* with *context* when state machine has transitioned to *state*. If currently at *state*, *fn* is invoked immediately.
+If state machine is at *state*, invokes *fn* immediately with *context*. Additionally, every time the state machine transitions to *state*, *fn* will be invoked with *context*.
 
 ### *machine*.once(*state*, *fn*) &rarr; Machine
 
-Invokes *fn* with *context* just once when state machine has transitioned to *state*; however, if state machine is presently at *state*, *fn* is invoked immediately.
+If state machine is at *state*, invokes *fn* immediately with *context*; otherwise, invokes *fn* with *context* when machine transitions to *state*.
 
 ### *machine*.to(*state*[, *...args*])
 
 Transitions state machine to *state*. Any passed *args* will be applied to any callbacks passed to `.is()`, `.on()`, and `.once()`.
+
+### *machine*.when(*state*, *fn*[, *context*]) &rarr; Machine
+
+Similar to `.once()`; however, if state machine is not at *state* and does not transition to *state* next, *fn* is discarded and never invoked.
 
 License
 -------
