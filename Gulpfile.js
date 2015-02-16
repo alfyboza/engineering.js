@@ -52,3 +52,5 @@ gulp.task('coveralls', ['instrument'], function () {
 gulp.task('watch', function () {
   gulp.watch(['lib/*.js', 'test/*.test.js'], ['test']);
 });
+
+gulp.task('default', ['test']);
