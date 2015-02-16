@@ -1,8 +1,14 @@
 var coveralls = require('gulp-coveralls');
+var del = require('del');
 var gulp = require('gulp');
 var istanbul = require('gulp-istanbul');
 var jshint = require('gulp-jshint');
 var mocha = require('gulp-mocha');
+var open = require('gulp-open');
+
+gulp.task('clean', function (done) {
+  del(['coverage'], done);
+});
 
 gulp.task('lint', function () {
   return gulp
@@ -17,7 +23,7 @@ gulp.task('test', ['lint'], function () {
     .pipe(mocha());
 });
 
-gulp.task('instrument', function (done) {
+gulp.task('instrument', ['clean'], function (done) {
   gulp
     .src('lib/*.js')
     .pipe(istanbul())
@@ -29,6 +35,12 @@ gulp.task('instrument', function (done) {
         .pipe(istanbul.writeReports())
         .on('end', done);
     });
+});
+
+gulp.task('coverage', ['instrument'], function () {
+  gulp
+    .src('coverage/lcov-report/index.html')
+    .pipe(open());
 });
 
 gulp.task('coveralls', ['instrument'], function () {
