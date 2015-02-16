@@ -8,6 +8,12 @@ chai.use(require('sinon-chai'));
 // Reference chai's `expect()``
 var expect = chai.expect;
 
+var apply = function (options) {
+  return function () {
+    engineer(options);
+  };
+};
+
 describe('engineer(options)', function () {
   beforeEach(function () {
     this.sinon = sinon.sandbox.create();
@@ -28,48 +34,40 @@ describe('engineer(options)', function () {
   });
 
   it('throws if not passed options', function () {
-    expect(engineer).to.throw('Expected options');
+    expect(apply()).to.throw('Expected options');
   });
 
   it('throws if no state transitions are specified', function () {
-    expect(function () {
-      engineer({default: 'open'});
-    }).to.throw('Expected map of state transitions');
+    expect(apply({default: 'open'})).to.throw('Expected map of state transitions');
   });
 
   it('throws if no default state is specified', function () {
-    expect(function () {
-      engineer({
-        states: {
-          closed: ['open'],
-          open: ['closed']
-        }
-      });
-    }).to.throw('Expected default state');
+    expect(apply({
+      states: {
+        closed: ['open'],
+        open: ['closed']
+      }
+    })).to.throw('Expected default state');
   });
 
   it('throws if default state is unknown', function () {
-    expect(function () {
-      engineer({
-        states: {
-          closed: ['open'],
-          open: ['closed']
-        },
-        default: 'half-open'
-      });
-    }).to.throw(/^Invalid default state:/);
+    expect(apply({
+      states: {
+        closed: ['open'],
+        open: ['closed']
+      },
+      default: 'half-open'
+    })).to.throw(/^Invalid default state:/);
   });
 
   it('throws if state transitions to unknown state', function () {
-    expect(function () {
-      engineer({
-        states: {
-          closed: ['open', 'half-open'],
-          open: ['closed']
-        },
-        default: 'closed'
-      });
-    }).to.throw(/^Unknown state transition:/);
+    expect(apply({
+      states: {
+        closed: ['open', 'half-open'],
+        open: ['closed']
+      },
+      default: 'closed'
+    })).to.throw(/^Unknown state transition:/);
   });
 
   it('provides a getter to query states', function () {
