@@ -6,18 +6,19 @@ Engineer lightweight finite state machines.
 Synopsis
 --------
 
-Installation is easy via `npm`:
+Installation is easy via `npm`.
 
 ```
 npm install [--save] engineering
 ```
 
-Defining a state machine is very straightforward:
+Defining a state machine is very straightforward. The following example defines a state machine to keep track of a WebSocket state.
 
 ```js
 var engineer = require('engineering');
 
 function Client() {
+  // Define state machine for WebSocket state
   this.state = engineer({
     states: {
       // connected -> disconnecting
@@ -36,24 +37,32 @@ function Client() {
     // Default state is disconnected
     default: 'disconnected'
   });
+
+  // When connected, attach a disconnecting listener to close
+  // socket
+  this.state.on('connected', function (ws) {
+    this.state.once('disconnecting', function () {
+      ws.once('close', this.state.to.bind(null, 'disconnected'));
+      ws.close();
+    }, this);
+  }, this);
 }
-```
 
-Using it to track state is simple:
-
-```js
 Client.prototype.connect = function (fn) {
-  var state = this.state;
-
-  if (state.is('connected', fn)) {
-    return;
-  } else if (state.is('connecting')) {
+  // Determine if connected
+  if (state.is(['connected', 'connecting'])) {
+    // If connected, invoke callback immediately; otherwise,
+    // invoke once connected
     state.when('connected', fn);
   } else if (state.is('disconnecting')) {
-    state.once('disconnected', (function () {
+    // Disconnecting, so attempt to do connect once fully
+    // disconnected
+    state.when('disconnected', function () {
       this.connect(fn);
-    }).bind(this));
+    }, this);
   } else {
+    // Disconnected, so transition to connecting; transition
+    // appropriately if connection to server was successful
     state.to('connecting');
     connectToServer(function (err, ws) {
       if (err) {
@@ -65,12 +74,15 @@ Client.prototype.connect = function (fn) {
     });
   }
 };
-```
 
-And then, using `.when()`, let the state machine ensure that the message is always sent whether you're already connected or are presently connecting:
+Client.prototype.disconnect = function () {
+  // Trigger disconnecting workflow
+  this.state.to('disconnecting');
+});
 
-```js
 Client.prototype.send = function (data) {
+  // If connected, send data immediately; otherwise, presently
+  // connecting and will send data once connected
   this.state.when('connected', function (ws) {
     ws.send(data);
   });
@@ -103,7 +115,7 @@ If state machine is at *state*, invokes *fn* immediately with *context*; otherwi
 
 ### *machine*.to(*state*[, *...args*])
 
-Transitions state machine to *state*. Any passed *args* will be applied to any callbacks passed to `.is()`, `.on()`, and `.once()`.
+Transitions state machine to *state*. Any passed *args* will be applied to any callbacks passed to `.is()`, `.on()`,  `.once()`, and `.when()`.
 
 ### *machine*.when(*state*, *fn*[, *context*]) &rarr; Machine
 
