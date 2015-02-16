@@ -27,6 +27,10 @@ describe('engineer(options)', function () {
     this.sinon.restore();
   });
 
+  it('throws if not passed options', function () {
+    expect(engineer).to.throw('Expected options');
+  });
+
   it('throws if no state transitions are specified', function () {
     expect(function () {
       engineer({default: 'open'});
