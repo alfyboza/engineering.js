@@ -8,6 +8,7 @@ chai.use(require('sinon-chai'));
 // Reference chai's `expect()``
 var expect = chai.expect;
 
+// Returns a function that creates a state machine
 var apply = function (options) {
   return function () {
     engineer(options);
@@ -20,12 +21,14 @@ describe('engineer(options)', function () {
   });
 
   beforeEach(function () {
-    this.gate = engineer({
+    this.intensity = engineer({
       states: {
-        closed: ['open'],
-        open: ['closed']
+        high: ['medium'],
+        medium: ['low', 'high'],
+        low: ['rest', 'medium'],
+        rest: ['low']
       },
-      default: 'closed'
+      default: 'rest'
     });
   });
 
@@ -71,47 +74,47 @@ describe('engineer(options)', function () {
   });
 
   it('provides a getter to query states', function () {
-    expect(this.gate.states).to.include.members(['open', 'closed']);
+    expect(this.intensity.states).to.include.members(['rest', 'low', 'medium', 'high']);
   });
 
   it('honors default state', function () {
-    expect(this.gate.is('closed')).to.be.true;
+    expect(this.intensity.is('rest')).to.be.true;
   });
 
   describe('#is(states[, fn[, context]])', function () {
     it('returns `false` if not at state', function () {
-      expect(this.gate.is('open')).to.be.false;
+      expect(this.intensity.is('high')).to.be.false;
     });
 
     it('invokes callback if at state', function () {
       var spy = sinon.spy();
-      this.gate.is('closed', spy);
+      this.intensity.is('rest', spy);
       expect(spy).to.have.been.called;
     });
 
     it('returns `true` if at state', function () {
-      expect(this.gate.is('closed')).to.be.true;
+      expect(this.intensity.is('rest')).to.be.true;
     });
 
     it('accepts a single state or an array of states', function () {
-      expect(this.gate.is(['open', 'closed'])).to.be.true;
+      expect(this.intensity.is(['rest', 'low'])).to.be.true;
     });
   });
 
   describe('#on(state, fn[, context])', function () {
     it('determines whether to invoke callback immediately', function () {
-      var is = this.sinon.spy(this.gate, 'is');
-      this.gate.on('closed', sinon.spy());
-      expect(is).to.have.been.calledWith('closed');
+      var is = this.sinon.spy(this.intensity, 'is');
+      this.intensity.on('rest', sinon.spy());
+      expect(is).to.have.been.calledWith('rest');
     });
 
     it('enqueues callback, invoking when transitioned to state', function () {
-      var gate = this.gate;
+      var intensity = this.intensity;
       var spy = sinon.spy();
 
-      gate.on('closed', spy);
-      ['open', 'closed'].forEach(function (state) {
-        gate.to(state);
+      intensity.on('rest', spy);
+      ['low', 'rest'].forEach(function (state) {
+        intensity.to(state);
       });
       expect(spy).to.have.been.calledTwice;
     });
@@ -119,18 +122,18 @@ describe('engineer(options)', function () {
 
   describe('#once(state, fn[, context])', function () {
     it('determines whether to invoke callback immediately', function () {
-      var is = this.sinon.spy(this.gate, 'is');
-      this.gate.once('closed', this.sinon.spy());
-      expect(is).to.have.been.calledWith('closed');
+      var is = this.sinon.spy(this.intensity, 'is');
+      this.intensity.once('rest', this.sinon.spy());
+      expect(is).to.have.been.calledWith('rest');
     });
 
     it('enqueues callback if not invoked, doing so just once when transitioned to state', function () {
-      var gate = this.gate;
+      var intensity = this.intensity;
       var spy = sinon.spy();
 
-      gate.once('open', spy);
-      ['open', 'closed', 'open'].forEach(function (state) {
-        gate.to(state);
+      intensity.once('low', spy);
+      ['low', 'rest', 'low'].forEach(function (state) {
+        intensity.to(state);
       });
       expect(spy).to.have.been.calledOnce;
     });
@@ -138,15 +141,15 @@ describe('engineer(options)', function () {
 
   describe('#to(state[, ...args])', function () {
     it('transitions to given state, invoking callbacks', function (done) {
-      this.gate.on('open', done);
-      this.gate.to('open');
+      this.intensity.on('low', done);
+      this.intensity.to('low');
     });
 
     it('does not allow transitioning to invalid state', function () {
-      var gate = this.gate;
+      var intensity = this.intensity;
 
       expect(function () {
-        gate.to('closed');
+        intensity.to('closed');
       }).to.throw(/^Invalid transition:/);
     });
 
@@ -154,39 +157,32 @@ describe('engineer(options)', function () {
       var args = {my: 'arguments'};
       var spy = sinon.spy();
 
-      this.gate.on('open', spy);
-      this.gate.to('open', args);
+      this.intensity.on('low', spy);
+      this.intensity.to('low', args);
       expect(spy).to.have.been.calledWithExactly(args);
     });
   });
 
   describe('#when(state, fn[, context])', function () {
     it('determines whether to invoke callback immediately', function () {
-      var is = this.sinon.spy(this.gate, 'is');
-      this.gate.when('closed', this.sinon.spy());
-      expect(is).to.have.been.calledWith('closed');
+      var is = this.sinon.spy(this.intensity, 'is');
+      this.intensity.when('rest', this.sinon.spy());
+      expect(is).to.have.been.calledWith('rest');
     });
 
     it('enqueues callback if not invoked, doing so only if transitioned to next', function () {
-      var gate = this.gate;
+      var intensity = this.intensity;
       var spy = sinon.spy();
 
-      gate.when('open', spy);
-      ['open', 'closed', 'open'].forEach(function (state) {
-        gate.to(state);
+      intensity.when('low', spy);
+      ['low', 'rest', 'low'].forEach(function (state) {
+        intensity.to(state);
       });
       expect(spy).to.have.been.calledOnce;
     });
 
     it('enqueues callback if not invoked, discarding it if not next transition', function () {
-      var intensity = engineer({
-        states: {
-          high: ['medium'],
-          medium: ['high', 'low'],
-          low: ['medium']
-        },
-        default: 'medium'
-      });
+      var intensity = this.intensity;
       var spy = sinon.spy();
 
       intensity.when('high', spy);
