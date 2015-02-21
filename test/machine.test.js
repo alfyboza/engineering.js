@@ -191,5 +191,57 @@ describe('engineer(options)', function () {
       });
       expect(spy).to.not.have.been.called;
     });
+
+    it('can be chained to test other states', function () {
+      var intensity = this.intensity;
+      var spy = sinon.spy();
+
+      intensity
+        .when('rest', spy)
+        .when('low', spy)
+        .to('low');
+
+      expect(spy).to.have.been.calledOnce;
+    });
+  });
+
+  describe('#otherwise(fn[, context])', function () {
+    it('invokes callback if specified states are not transitioned to', function () {
+      var intensity = this.intensity;
+      var when = sinon.spy();
+      var otherwise = sinon.spy();
+
+      intensity
+        .when('medium', when)
+        .otherwise(otherwise)
+        .to('low');
+
+      expect(when).to.not.have.been.called;
+      expect(otherwise).to.have.been.called;
+    });
+
+    it('does not invoke callback if transitioned to a specified state', function () {
+      var intensity = this.intensity;
+      var when = sinon.spy();
+      var otherwise = sinon.spy();
+
+      intensity
+        .when('low', when)
+        .otherwise(otherwise)
+        .to('low');
+
+      expect(when).to.have.been.called;
+      expect(otherwise).to.not.have.been.called;
+    });
+
+    it('returns state machine', function () {
+      var test = function () {
+        return this.intensity
+          .when('low', sinon.spy())
+          .otherwise(sinon.spy());
+      };
+
+      expect(test.call(this)).to.equal(this.intensity);
+    });
   });
 });
