@@ -1,4 +1,4 @@
-engineering [![Build Status][travis-img]][travis-link] [![Coverage Status][coveralls-img]][coveralls-link]
+engineering [![Module Version][npm-img]][npm-url] [![MIT License][license-img]][license-url] [![Build Status][travis-img]][travis-link] [![Coverage Status][coveralls-img]][coveralls-link]
 ===========
 
 Engineer lightweight finite state machines.
@@ -245,8 +245,14 @@ License
 
 MIT
 
-[coveralls-img]: https://coveralls.io/repos/alfyboza/engineering.js/badge.svg?branch=master
+[npm-img]: https://img.shields.io/npm/v/engineering.svg?style=flat
+[npm-url]: https://npmjs.org/package/engineering
+
+[license-img]: https://img.shields.io/npm/l/engineering.svg?style=flat
+[license-url]: http://choosealicense.com/licenses/mit/
+
+[coveralls-img]: https://img.shields.io/coveralls/alfyboza/engineering.js.svg?style=flat
 [coveralls-link]: https://coveralls.io/r/alfyboza/engineering.js?branch=master
 
-[travis-img]: https://travis-ci.org/alfyboza/engineering.js.svg?branch=master
+[travis-img]: https://img.shields.io/travis/alfyboza/engineering.js.svg?style=flat
 [travis-link]: https://travis-ci.org/alfyboza/engineering.js
