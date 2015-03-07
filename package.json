@@ -37,6 +37,7 @@
     "gulp-open": "^0.3.2",
     "jshint-stylish": "^1.0.1",
     "sinon": "^1.12.2",
-    "sinon-chai": "^2.7.0"
+    "sinon-chai": "^2.7.0",
+    "uuid": "^2.0.1"
   }
 }

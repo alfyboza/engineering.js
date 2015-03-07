@@ -1,12 +1,7 @@
 /*jshint mocha: true, -W030 */
-var chai = require('chai');
 var engineer = require('../lib/machine');
-var sinon = require('sinon');
-
-chai.use(require('sinon-chai'));
-
-// Reference chai's `expect()``
-var expect = chai.expect;
+var expect = require('chai').expect;
+var sinon = require('./helpers/sinon');
 
 // Returns a function that creates a state machine
 var apply = function (options) {
@@ -16,9 +11,7 @@ var apply = function (options) {
 };
 
 describe('engineer(options)', function () {
-  beforeEach(function () {
-    this.sinon = sinon.sandbox.create();
-  });
+  beforeEach(sinon());
 
   beforeEach(function () {
     this.intensity = engineer({
@@ -30,10 +23,6 @@ describe('engineer(options)', function () {
       },
       default: 'rest'
     });
-  });
-
-  afterEach(function () {
-    this.sinon.restore();
   });
 
   it('throws if not passed options', function () {
@@ -164,84 +153,71 @@ describe('engineer(options)', function () {
   });
 
   describe('#when(state, fn[, context])', function () {
-    it('determines whether to invoke callback immediately', function () {
-      var is = this.sinon.spy(this.intensity, 'is');
-      this.intensity.when('rest', this.sinon.spy());
-      expect(is).to.have.been.calledWith('rest');
+    it('returns a Watch for chaining', function () {
+      var watch = this.intensity.when('low', sinon.spy());
+
+      expect(watch.when).to.be.a.function;
+      expect(watch.otherwise).to.be.a.function;
     });
 
-    it('enqueues callback if not invoked, doing so only if transitioned to next', function () {
-      var intensity = this.intensity;
-      var spy = sinon.spy();
+    describe('#when(state, fn[, context])', function () {
+      it('enqueues callback, invoking only if transitioned to state next', function (done) {
+        var intensity = this.intensity;
 
-      intensity.when('low', spy);
-      ['low', 'rest', 'low'].forEach(function (state) {
-        intensity.to(state);
+        intensity
+          .when('low', done)
+          .to('low');
       });
-      expect(spy).to.have.been.calledOnce;
-    });
 
-    it('enqueues callback if not invoked, discarding it if not next transition', function () {
-      var intensity = this.intensity;
-      var spy = sinon.spy();
+      it('enqueues callback, discarding if not transitioned to state next', function () {
+        var intensity = this.intensity;
+        var spy = sinon.spy();
 
-      intensity.when('high', spy);
-      ['low', 'medium', 'high'].forEach(function (state) {
-        intensity.to(state);
+        intensity
+          .when('high', spy)
+          .to('low');
+
+        expect(spy).to.not.have.been.called;
       });
-      expect(spy).to.not.have.been.called;
+
+      it('does not invoke callback based if already at state', function () {
+        var intensity = this.intensity;
+        var spy = sinon.spy();
+
+        intensity.when('rest', spy);
+
+        expect(spy).to.not.have.been.called;
+      });
     });
 
-    it('can be chained to test other states', function () {
-      var intensity = this.intensity;
-      var spy = sinon.spy();
+    describe('#otherwise(fn[, context])', function () {
+      it('invokes callback if watched states not transitioned to', function (done) {
+        var intensity = this.intensity;
 
-      intensity
-        .when('rest', spy)
-        .when('low', spy)
-        .to('low');
+        intensity
+          .when('medium', sinon.spy())
+          .otherwise(done)
+          .to('low');
+      });
 
-      expect(spy).to.have.been.calledOnce;
-    });
-  });
+      it('discards callback if one of watched states transitioned to', function () {
+        var intensity = this.intensity;
+        var spy = sinon.spy();
 
-  describe('#otherwise(fn[, context])', function () {
-    it('invokes callback if specified states are not transitioned to', function () {
-      var intensity = this.intensity;
-      var when = sinon.spy();
-      var otherwise = sinon.spy();
-
-      intensity
-        .when('medium', when)
-        .otherwise(otherwise)
-        .to('low');
-
-      expect(when).to.not.have.been.called;
-      expect(otherwise).to.have.been.called;
-    });
-
-    it('does not invoke callback if transitioned to a specified state', function () {
-      var intensity = this.intensity;
-      var when = sinon.spy();
-      var otherwise = sinon.spy();
-
-      intensity
-        .when('low', when)
-        .otherwise(otherwise)
-        .to('low');
-
-      expect(when).to.have.been.called;
-      expect(otherwise).to.not.have.been.called;
-    });
-
-    it('returns state machine', function () {
-      var test = function () {
-        return this.intensity
+        intensity
           .when('low', sinon.spy())
-          .otherwise(sinon.spy());
-      };
+          .otherwise(spy)
+          .to('low');
 
-      expect(test.call(this)).to.equal(this.intensity);
+        expect(spy).to.not.have.been.called;
+      });
+
+      it('returns state machine', function () {
+        var intensity = this.intensity;
+        var machine = intensity.when('low', sinon.spy()).otherwise(sinon.spy());
+
+        expect(machine.otherwise).to.not.exist;
+      });
     });
   });
 });
