@@ -5,6 +5,7 @@ var istanbul = require('gulp-istanbul');
 var jshint = require('gulp-jshint');
 var open = require('gulp-open');
 var shell = require('gulp-shell');
+var stylish = require('jshint-stylish');
 
 var paths = {
   sources: ['lib/*.js'],
@@ -19,7 +20,7 @@ gulp.task('lint', function () {
   return gulp
     .src([__dirname].concat(paths.sources, paths.tests))
     .pipe(jshint())
-    .pipe(jshint.reporter('default'));
+    .pipe(jshint.reporter(stylish))
     .pipe(jshint.reporter('fail'));
 });
 
