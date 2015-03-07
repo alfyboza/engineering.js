@@ -4,12 +4,12 @@ var gulp = require('gulp');
 var istanbul = require('gulp-istanbul');
 var jshint = require('gulp-jshint');
 var open = require('gulp-open');
-var shell = require('gulp-shell');
+var mocha = require('gulp-mocha');
 var stylish = require('jshint-stylish');
 
 var paths = {
   sources: ['lib/*.js'],
-  tests: ['test/*.test.js']
+  tests: ['test/**/*.js']
 };
 
 gulp.task('clean', function (done) {
@@ -24,21 +24,27 @@ gulp.task('lint', function () {
     .pipe(jshint.reporter('fail'));
 });
 
-gulp.task('test', ['lint'], shell.task('mocha'));
+gulp.task('test', ['lint'], function () {
+  return gulp
+    .src(paths.tests, {read: false})
+    .pipe(mocha());
+});
 
-gulp.task('instrument', ['clean'], function (done) {
-  gulp
+gulp.task('instrument:prepare', ['clean'], function () {
+  return gulp
     .src(paths.sources)
     .pipe(istanbul())
-    .pipe(istanbul.hookRequire())
-    .on('finish', function () {
-      gulp
-        .src(paths.tests, {read: false})
-        .pipe(shell('mocha --reporter dot'))
-        .pipe(istanbul.writeReports())
-        .on('end', done);
-    });
+    .pipe(istanbul.hookRequire());
 });
+
+gulp.task('instrument:run', ['instrument:prepare'], function () {
+  return gulp
+    .src(paths.tests, {read: false})
+    .pipe(mocha({reporter: 'dot'}))
+    .pipe(istanbul.writeReports());
+});
+
+gulp.task('instrument', ['instrument:run']);
 
 gulp.task('coverage', ['instrument'], function () {
   return gulp
