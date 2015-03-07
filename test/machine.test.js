@@ -70,6 +70,54 @@ describe('engineer(options)', function () {
     expect(this.intensity.is('rest')).to.be.true;
   });
 
+  describe('#at(state, fn[, context])', function () {
+    it('returns a Query for chaining', function () {
+      var query = this.intensity.at('rest', sinon.spy());
+
+      expect(query.at).to.be.a.function;
+      expect(query.otherwise).to.be.a.function;
+    });
+
+    describe('#at(state, fn[, context])', function () {
+      it('returns same Query for additional chaining', function () {
+        var query = this.intensity.at('rest', sinon.spy());
+
+        expect(query.at('low', sinon.spy())).to.equal(query);
+      });
+    });
+
+    describe('#otherwise(fn[, context])', function () {
+      it('invokes callback for query if at state', function (done) {
+        var intensity = this.intensity;
+
+        intensity
+          .at('rest', done)
+          .otherwise(sinon.spy());
+      });
+
+      it('invokes otherwise callback if not at state', function (done) {
+        var intensity = this.intensity;
+
+        intensity
+          .at('low', sinon.spy())
+          .otherwise(done);
+      });
+
+      it('returns value returned by callback', function () {
+        var intensity = this.intensity;
+        var value = {};
+
+        var returned = intensity
+          .at('rest', function () {
+            return value;
+          })
+          .otherwise(sinon.spy());
+
+        expect(returned).to.equal(value);
+      });
+    });
+  });
+
   describe('#is(states[, fn[, context]])', function () {
     it('returns `false` if not at state', function () {
       expect(this.intensity.is('high')).to.be.false;
