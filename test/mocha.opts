@@ -1,4 +1,4 @@
 --colors
 --check-leaks
---reporter dot
+--reporter spec
 --ui bdd

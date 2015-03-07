@@ -3,8 +3,13 @@ var del = require('del');
 var gulp = require('gulp');
 var istanbul = require('gulp-istanbul');
 var jshint = require('gulp-jshint');
-var mocha = require('gulp-mocha');
 var open = require('gulp-open');
+var shell = require('gulp-shell');
+
+var paths = {
+  sources: ['lib/*.js'],
+  tests: ['test/*.test.js']
+};
 
 gulp.task('clean', function (done) {
   del(['coverage'], done);
@@ -12,33 +17,30 @@ gulp.task('clean', function (done) {
 
 gulp.task('lint', function () {
   return gulp
-    .src(['lib/*.js', 'test/*.test.js'])
+    .src([__dirname].concat(paths.sources, paths.tests))
     .pipe(jshint())
     .pipe(jshint.reporter('default'));
+    .pipe(jshint.reporter('fail'));
 });
 
-gulp.task('test', ['lint'], function () {
-  return gulp
-    .src('test/*.test.js', {read: false})
-    .pipe(mocha());
-});
+gulp.task('test', ['lint'], shell.task('mocha'));
 
 gulp.task('instrument', ['clean'], function (done) {
   gulp
-    .src('lib/*.js')
+    .src(paths.sources)
     .pipe(istanbul())
     .pipe(istanbul.hookRequire())
     .on('finish', function () {
       gulp
-        .src('test/*.test.js', {read: false})
-        .pipe(mocha({reporter: 'dot'}))
+        .src(paths.tests, {read: false})
+        .pipe(shell('mocha --reporter dot'))
         .pipe(istanbul.writeReports())
         .on('end', done);
     });
 });
 
 gulp.task('coverage', ['instrument'], function () {
-  gulp
+  return gulp
     .src('coverage/lcov-report/index.html')
     .pipe(open());
 });
@@ -50,7 +52,7 @@ gulp.task('coveralls', ['instrument'], function () {
 });
 
 gulp.task('watch', function () {
-  gulp.watch(['lib/*.js', 'test/*.test.js'], ['test']);
+  gulp.watch(paths.sources.concat(paths.tests), ['test']);
 });
 
 gulp.task('default', ['test']);
