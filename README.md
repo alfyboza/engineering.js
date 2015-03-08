@@ -3,6 +3,8 @@ engineering [![Module Version][npm-img]][npm-url] [![MIT License][license-img]][
 
 Engineer lightweight finite state machines.
 
+Available in both Node.js and web browsers using Browserify.
+
 Synopsis
 --------
 
@@ -37,57 +39,83 @@ function Client() {
     // Default state is disconnected
     default: 'disconnected'
   });
+}
 ```
 
-Pass arguments to any transition listeners:
+React to state machine transitions easily:
 
 ```js
-Client.prototype.connect = function (callback) {
-  var connection = this.connection;
+function Client() {
+  // ...same as above
 
-  var onError = function (err) {
-    connection.to('disconnected');
-    callback(err);
-  };
+  // When connected, relay WebSocket's "message" notification
+  this.connection.on('connected', function (ws) {
+    var emit = this.emit.bind(this, 'message');
 
-  connection.to('connecting');
-
-  var ws = new WebSocket(this.url);
-  ws.on('open', function () {
-    ws.removeListener('error', onError);
-    connection.to('connected', ws);
-    callback(null);
-  });
-  ws.on('error', onError);
-});
-```
-
-Configure the state machine drive actions:
-
-```js
-// In constructor:
-this.connection.on('connected', function (ws) {
-  var connection = this.connection;
-
-  connection.once('disconnecting', function () {
-    ws.on('close', function () {
-      connection.to('disconnected');
+    ws.on('message', function (message) {
+      emit(message);
     });
-    ws.close();
-  });
-}, this);
+  }, this);
+}
 ```
 
-Then, perform transitions to drive configured actions:
+Effortlessly drive action based on the machine's state:
 
 ```js
-Client.prototype.disconnect = function (callback) {
+Client.prototype.connect = function (url) {
+  var self = this;
+  var connection = self.connection;
+
+  return new Promise(function (resolve, reject) {
+    connection
+      // Connected, so resolve immediately
+      .at('connected', resolve)
+      // Connecting, so wait until connected or disconnected
+      .at('connecting', function () {
+        connection
+          .when('connected', resolve)
+          .otherwise(reject);
+      })
+      // Disconnecting, so wait until disconnected and attempt to connect again
+      .at('disconnecting', function () {
+        connection.once('disconnected', function () {
+          self.connect(url).then(resolve, reject);
+        });
+      })
+      // Disconnected, so attempt WebSocket connection
+      .otherwise(function () {
+        connection.to('connecting');
+
+        var onError = function (err) {
+          connection.to('disconnected');
+          reject(err);
+        };
+
+        var ws = new WebSocket(url);
+        ws.on('error', onError);
+        ws.on('open', function () {
+          ws.removeListener('error', onError);
+          connection.to('connected', ws);
+          resolve(ws);
+        });
+      });
+  });
+};
+```
+
+Know the machine's state using an expressive and easy-to-understand interface:
+
+```js
+Client.prototype.send = function (message) {
   var connection = this.connection;
 
-  if (!connection.is('connected')) return callback(new Error('Not connected'));
-
-  connection.to('disconnecting'); // triggers action above
-  connection.once('disconnected', callback);
+  connection
+    .at('connected', function (ws) {
+      ws.send(message);
+    })
+    .otherwise(function () {
+      throw new Error('Client not connected');
+    });
 };
 ```
 
@@ -105,20 +133,7 @@ The following *options* can be specified:
 * `states`  &rarr; **Object**: A map of state transitions. The keys are states, and the value is an array of transitions. **Required.**
 * `default` &rarr; **String**: The default state. **Required.**
 
-```js
-// Create a state machine for intensity levels
-var intensity = engineer({
-  states: {
-    high: ['medium'],        // high -> medium
-    medium: ['high', 'low'], // medium -> high, low
-    low: ['medium', 'rest'], // low -> medium, rest
-    rest: ['low']            // rest -> low
-  },
-  default: 'rest'
-});
-```
-
-### Using a state machine
+### Querying present machine state
 
 #### *machine*.is(*state*[, *fn*[, *context*]]) &rarr; Boolean
 
@@ -126,119 +141,50 @@ Indicates whether state machine is currently at *state*. If at *state* and *fn* 
 
 Returns `true` if at *state*; `false` otherwise.
 
-```js
-// Determine if at rest
-var atRest = intensity.is('rest');
+<a name="machine-at"></a>
+#### *machine*.at(*state*, *fn*[, *context*]) &rarr; Query
 
-// Slow down if intensity is at medium or high
-intensity.is(['high', 'medium'], function () {
-  exercise.slowDown();
-});
-```
+Begins a chainable query of the machine's current state, queuing *fn* for invocation if at *state*.
+
+#### *query*.at(*state*, *fn*[, *context*]) &rarr; Query
+
+[Identical to `machine.at()`](#machine-at). Used to query additional states.
+
+#### *query*.otherwise(*fn*[, *context*]) &rarr; Any
+
+Performs check of machine's state. If machine is at a state with a previous query, the appropriate callback is invoked; otherwise, *fn* is invoked.
+
+Returns invoked callback's return value.
+
+### Reacting to state transition
 
 #### *machine*.on(*state*, *fn*[, *context*]) &rarr; Machine
 
 If state machine is at *state*, invokes *fn* immediately with *context*. Additionally, every time the state machine transitions to *state*, *fn* will be invoked with *context*.
 
-```js
-// When connected, attach a listener to parse incoming
-// messages
-connection.on('connected', function (ws) {
-  var parse = this.parse.bind(this);
-
-  ws.on('message', function (message) {
-    parse(message);
-  });
-}, this);
-```
-
+<a name="machine-once"></a>
 #### *machine*.once(*state*, *fn*) &rarr; Machine
 
 If state machine is at *state*, invokes *fn* immediately with *context*; otherwise, invokes *fn* with *context* when machine transitions to *state*.
 
-```js
-// When connected, listen to `disconnecting` transition to
-// close WebSocket connection
-connection.on('connected', function (ws) {
-  connection.once('disconnecting', function () {
-    ws.close();
-  });
-});
-```
-
-#### *machine*.to(*state*[, *...args*])
-
-Transitions state machine to *state*. Any passed *args* will be applied to any callbacks passed to `.is()`, `.on()`,  `.once()`, and `.when()`.
-
-```js
-// Indicate we are connecting
-connection.to('connecting');
-
-// Establish a WebSocket connection
-var ws = new WebSocket(url);
-ws.on('open', function () {
-  // Transition to `connected`, passing WebSocket instance to
-  // any `connected` handlers
-  connection.to('connected', ws);
-});
-```
-
-#### Reacting to state transitions
-
 <a name="machine-when"></a>
 #### *machine*.when(*state*, *fn*[, *context*]) &rarr; Watch
 
-Similar to `.once()`; however, if state machine is not at *state* and transitions to *state* next, *fn* is invoked.
-
-```js
-// If connecting, send message only if connected successfully
-if (connection.is('connecting')) {
-  connection.when('connected', function (ws) {
-    ws.send(message);
-  });
-}
-```
+[Similar to `.once()`](#machine-once); however, if state machine is not at *state* and transitions to *state* next, *fn* is invoked.
 
 #### *watch*.when(*state*, *fn*[, *context*]) &rarr; Watch
 
 [Identical to `machine.watch()`](#machine-watch). Used to watch additional state transitions.
 
-```js
-function sendMessage(message, callback) {
-  var isDisconnecting = connection.is('disconnecting', function () {
-    connection.once('disconnected', sendMessage.bind(null, message, callback));
-  });
-
-  if (!isDisconnecting) {
-    connection
-      .when('connected', function (ws) {
-        ws.send(message);
-        callback(null);
-      })
-      .when('disconnected', function () {
-        callback(new Error('Disconnected; unable to send message'));
-      });
-  }
-}
-```
-
 #### *watch*.otherwise(*fn*[, *context*]) &rarr; Machine
 
 If state machine transitions to any state that does not have a watch, *fn* is invoked with *context*.
 
-```js
-// The above can be described rewritten as follows using `.otherwise()`
-function sendMessage(message, callback) {
-  connection
-    .when('connected', function (ws) {
-      ws.send(message);
-      callback(null);
-    })
-    .otherwise(function () {
-      callback(new Error('Disconnected; unable to send message'));
-    });
-}
-```
+### Transitioning machine state
+
+#### *machine*.to(*state*[, *...args*])
+
+Transitions state machine to *state*. Any passed *args* will be applied to any callbacks passed to `.is()`, `.at()`, `.on()`,  `.once()`, and `.when()`.
 
 License
 -------
