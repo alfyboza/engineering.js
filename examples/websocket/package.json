@@ -1,0 +1,16 @@
+{
+  "name": "engineering-websocket-example",
+  "version": "1.0.0",
+  "description": "An example WebSocket client using engineering.js",
+  "private": true,
+  "main": "index.js",
+  "author": "Alfonso Boza <alfonso@al.fon.so>",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^2.9.13",
+    "engineering": "file:../../",
+    "inherits": "^2.0.1",
+    "uuid": "^2.0.1",
+    "ws": "^0.7.1"
+  }
+}

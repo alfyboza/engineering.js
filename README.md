@@ -119,6 +119,8 @@ Client.prototype.send = function (message) {
 };
 ```
 
+[View the accompanying `examples` directory for concrete examples.][examples]
+
 API
 ---
 
@@ -190,6 +192,8 @@ License
 -------
 
 MIT
+
+[examples]: https://github.com/alfyboza/engineering.js/tree/master/examples
 
 [npm-img]: https://img.shields.io/npm/v/engineering.svg?style=flat
 [npm-url]: https://npmjs.org/package/engineering
