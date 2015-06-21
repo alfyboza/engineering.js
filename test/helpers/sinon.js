@@ -1,14 +1,13 @@
-/*jshint mocha: true */
-var sinon = require('sinon');
+var sinon = require('sinon')
 
 exports = module.exports = function sandbox() {
   afterEach(function () {
-    this.sinon.restore();
-  });
+    this.sinon.restore()
+  })
 
   return function createSandbox() {
-    this.sinon = sinon.sandbox.create();
-  };
-};
+    this.sinon = sinon.sandbox.create()
+  }
+}
 
-exports.spy = sinon.spy;
+exports.spy = sinon.spy

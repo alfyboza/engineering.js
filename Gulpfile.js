@@ -1,11 +1,10 @@
-var coveralls = require('gulp-coveralls');
-var del = require('del');
-var gulp = require('gulp');
-var istanbul = require('gulp-istanbul');
-var jshint = require('gulp-jshint');
-var open = require('gulp-open');
-var mocha = require('gulp-mocha');
-var stylish = require('jshint-stylish');
+var coveralls = require('gulp-coveralls')
+var del = require('del')
+var eslint = require('gulp-eslint')
+var gulp = require('gulp')
+var istanbul = require('gulp-istanbul')
+var open = require('gulp-open')
+var mocha = require('gulp-mocha')
 
 var paths = {
   sources: ['lib/*.js'],
@@ -19,9 +18,9 @@ gulp.task('clean', function (done) {
 gulp.task('lint', function () {
   return gulp
     .src([__dirname].concat(paths.sources, paths.tests))
-    .pipe(jshint())
-    .pipe(jshint.reporter(stylish))
-    .pipe(jshint.reporter('fail'));
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError());
 });
 
 gulp.task('test', ['lint'], function () {
