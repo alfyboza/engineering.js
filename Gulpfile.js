@@ -7,58 +7,58 @@ var open = require('gulp-open')
 var mocha = require('gulp-mocha')
 
 var paths = {
-  sources: ['lib/*.js'],
+  sources: [__filename, 'lib/*.js'],
   tests: ['test/**/*.js']
-};
+}
 
 gulp.task('clean', function (done) {
-  del(['coverage'], done);
-});
+  del(['coverage'], done)
+})
 
 gulp.task('lint', function () {
   return gulp
-    .src([__dirname].concat(paths.sources, paths.tests))
+    .src([].concat(paths.sources, paths.tests))
     .pipe(eslint())
     .pipe(eslint.format())
-    .pipe(eslint.failAfterError());
-});
+    .pipe(eslint.failAfterError())
+})
 
 gulp.task('test', ['lint'], function () {
   return gulp
     .src(paths.tests, {read: false})
-    .pipe(mocha());
-});
+    .pipe(mocha())
+})
 
 gulp.task('instrument:prepare', ['clean'], function () {
   return gulp
     .src(paths.sources)
     .pipe(istanbul())
-    .pipe(istanbul.hookRequire());
-});
+    .pipe(istanbul.hookRequire())
+})
 
 gulp.task('instrument:run', ['instrument:prepare'], function () {
   return gulp
     .src(paths.tests, {read: false})
     .pipe(mocha({reporter: 'dot'}))
-    .pipe(istanbul.writeReports());
-});
+    .pipe(istanbul.writeReports())
+})
 
-gulp.task('instrument', ['instrument:run']);
+gulp.task('instrument', ['instrument:run'])
 
 gulp.task('coverage', ['instrument'], function () {
   return gulp
     .src('coverage/lcov-report/index.html')
-    .pipe(open());
-});
+    .pipe(open())
+})
 
 gulp.task('coveralls', ['instrument'], function () {
   return gulp
     .src('coverage/**/lcov.info')
-    .pipe(coveralls());
-});
+    .pipe(coveralls())
+})
 
 gulp.task('watch', function () {
-  gulp.watch(paths.sources.concat(paths.tests), ['test']);
-});
+  gulp.watch(paths.sources.concat(paths.tests), ['test'])
+})
 
-gulp.task('default', ['test']);
+gulp.task('default', ['test'])
