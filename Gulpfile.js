@@ -7,6 +7,7 @@ var open = require('gulp-open')
 var mocha = require('gulp-mocha')
 
 var paths = {
+  examples: ['examples/*/*.js'],
   sources: [__filename, 'lib/*.js'],
   tests: ['test/**/*.js']
 }
@@ -17,7 +18,7 @@ gulp.task('clean', function (done) {
 
 gulp.task('lint', function () {
   return gulp
-    .src([].concat(paths.sources, paths.tests))
+    .src([].concat(paths.examples, paths.sources, paths.tests))
     .pipe(eslint())
     .pipe(eslint.format())
     .pipe(eslint.failAfterError())
@@ -58,7 +59,7 @@ gulp.task('coveralls', ['instrument'], function () {
 })
 
 gulp.task('watch', function () {
-  gulp.watch(paths.sources.concat(paths.tests), ['test'])
+  gulp.watch([].concat(paths.sources, paths.tests), ['test'])
 })
 
 gulp.task('default', ['test'])
