@@ -1,0 +1,4 @@
+--check-leaks
+--require ./test/helpers/bootstrap
+--reporter spec
+--ui bdd
